@@ -71,11 +71,11 @@ class  SelfCustomDataset(Dataset):
 
 train_label_dir = cfg.TRAIN_LABEL_DIR
 train_datasets = SelfCustomDataset(train_label_dir, imageset='train')
-train_dataloader = torch.utils.data.DataLoader(train_datasets, batch_size=batch_size, shuffle=True, num_workers=2)
+train_dataloader = torch.utils.data.DataLoader(train_datasets, batch_size=batch_size, shuffle=True, num_workers=0)
 
 val_label_dir = cfg.VAL_LABEL_DIR
 val_datasets = SelfCustomDataset(val_label_dir, imageset='test')
-val_dataloader = torch.utils.data.DataLoader(val_datasets, batch_size=batch_size, shuffle=True, num_workers=2)
+val_dataloader = torch.utils.data.DataLoader(val_datasets, batch_size=batch_size, shuffle=True, num_workers=0)
 
 
 ##进行数据提取函数的测试
