@@ -89,5 +89,5 @@ if __name__ == "__main__":
     _id, pred_list = predict(trained_model)
 
     submission = pd.DataFrame({"ID": _id, "Label": pred_list})
-    submission.to_csv(cfg.BASE + '{}_result-60epoch-1080.csv'
-                      .format(model_name), index=True, header=True)
+    submission.to_csv(os.path.join(cfg.SAVE_FOLDER , cfg.PREDICT_MODEL_NAME , '测试结果_{}-{}epoch-{}.csv'
+                      .format(cfg.PREDICT_MODEL_NAME,cfg.PREDICT_EPOCH,cfg.INPUT_SIZE)), index=True, header=True)

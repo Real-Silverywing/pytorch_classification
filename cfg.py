@@ -58,7 +58,9 @@ TEST_LABEL_DIR = BASE + r'\test.txt'
 
 
 ##训练完成，要使用predict.py验证时，权重文件的保存路径,默认保存在trained_model下
-TRAINED_MODEL = BASE + r'\weights\resnet101\epoch_60.pth'
+PREDICT_MODEL_NAME = 'resnet101'
+PREDICT_EPOCH = '60'
+TRAINED_MODEL = BASE + '\weights\{}\epoch_{}.pth'.format(PREDICT_MODEL_NAME,PREDICT_EPOCH)
 
 
 
