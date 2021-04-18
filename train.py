@@ -9,16 +9,22 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import math
 
-from data import train_dataloader,train_datasets
+from data import train_dataloader,train_datasets,val_dataloader,val_datasets
 import cfg
 from utils import adjust_learning_rate_cosine, adjust_learning_rate_step
-
+import matplotlib.pyplot as plt
 
 ##创建训练模型参数保存的文件夹
 save_folder = cfg.SAVE_FOLDER + cfg.model_name
 os.makedirs(save_folder, exist_ok=True)
-
+Loss_list = []
+Accuracy_list = []
+Loss_Epoch = []
+Acc_Epoch = []
+Loss_temp=[]
+Acc_temp=[]
 
 def load_checkpoint(filepath):
     checkpoint = torch.load(filepath)
@@ -70,13 +76,13 @@ print("...... Initialize the network done!!! .......")
 ###模型放置在gpu上进行计算
 if torch.cuda.is_available():
     model.cuda()
+    print("Using GPU")
 
 
 ##定义优化器与损失函数
-optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=cfg.LR)
+# optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=cfg.LR)
 # optimizer = optim.Adam(model.parameters(), lr=cfg.LR)
-optimizer = optim.SGD(model.parameters(), lr=cfg.LR,
-                      momentum=cfg.MOMENTUM, weight_decay=cfg.WEIGHT_DECAY)
+optimizer = optim.SGD(model.parameters(), lr=cfg.LR,momentum=cfg.MOMENTUM, weight_decay=cfg.WEIGHT_DECAY)
 
 criterion = nn.CrossEntropyLoss()
 # criterion = nn.BCEWithLogitsLoss()
@@ -89,10 +95,12 @@ batch_size = cfg.BATCH_SIZE
 
 #每一个epoch含有多少个batch
 max_batch = len(train_datasets)//batch_size
+print(len(train_datasets))
+
 epoch_size = len(train_datasets) // batch_size
 ## 训练max_epoch个epoch
 max_iter = cfg.MAX_EPOCH * epoch_size
-
+max_iter_end=math.floor(max_iter/10)*10
 start_iter = cfg.RESUME_EPOCH * epoch_size
 
 epoch = cfg.RESUME_EPOCH
@@ -112,8 +120,17 @@ for iteration in range(start_iter, max_iter):
 
     ##更新迭代器
     if iteration % epoch_size == 0:
+
+        if epoch > 1:
+            Loss_average = sum(Loss_temp) / len(Loss_temp)
+            Acc_average = sum(Acc_temp) / len(Acc_temp)
+            Loss_Epoch.append(Loss_average)
+            Acc_Epoch.append(Acc_average)
+            Loss_temp = []
+            Acc_temp = []
         # create batch iterator
         batch_iterator = iter(train_dataloader)
+        val_batch_iterator = iter(val_dataloader)
         loss = 0
         epoch += 1
         ###保存模型
@@ -130,6 +147,7 @@ for iteration in range(start_iter, max_iter):
                             # 'optimizer_state_dict': optimizer.state_dict(),
                             'epoch': epoch}
                 torch.save(checkpoint, os.path.join(save_folder, 'epoch_{}.pth'.format(epoch)))
+
 
     if iteration in stepvalues:
         step_index += 1
@@ -153,7 +171,7 @@ for iteration in range(start_iter, max_iter):
         images, labels = images.cuda(), labels.cuda()
 
     out = model(images)
-    loss = criterion(out, labels)
+    loss = criterion(out, labels.long())
 
     optimizer.zero_grad()  # 清空梯度信息，否则在每次进行反向传播时都会累加
     loss.backward()  # loss反向传播
@@ -161,10 +179,56 @@ for iteration in range(start_iter, max_iter):
 
     prediction = torch.max(out, 1)[1]
     train_correct = (prediction == labels).sum()
-    ##这里得到的train_correct是一个longtensor型，需要转换为float
+    # 这里得到的train_correct是一个longtensor型，需要转换为float
     # print(train_correct.type())
     train_acc = (train_correct.float()) / batch_size
 
     if iteration % 10 == 0:
+        # val_images, val_labels = next(val_batch_iterator)
+        # val_out = model(val_images)
+        # val_loss = criterion(val_out, val_labels.long())
+
+
+        Loss_list.append(loss.item())
+        Accuracy_list.append(train_acc * 100)
+        Loss_temp.append(loss.item())
+        Acc_temp.append(train_acc * 100)
         print('Epoch:' + repr(epoch) + ' || epochiter: ' + repr(iteration % epoch_size) + '/' + repr(epoch_size)
               + '|| Totel iter ' + repr(iteration) + ' || Loss: %.6f||' % (loss.item()) + 'ACC: %.3f ||' %(train_acc * 100) + 'LR: %.8f' % (lr))
+
+    if iteration==max_iter_end-1:
+        x1 = range(len(Accuracy_list))
+        x2 = range(len(Loss_list))
+        x3 = range(len(Acc_Epoch))
+        x4 = range(len(Loss_Epoch))
+        y1 = Accuracy_list
+        y2 = Loss_list
+        y3 = Acc_Epoch
+        y4 = Loss_Epoch
+
+        plt.subplot(2, 2, 1)
+        plt.plot(x1, y1, 'o-')
+        plt.xlabel('Test accuracy vs. iteration')
+        plt.ylabel('Test accuracy')
+
+        plt.subplot(2, 2, 2)
+        plt.plot(x2, y2, '.-')
+        plt.xlabel('Test loss vs. iteration')
+        plt.ylabel('Test loss')
+
+
+        plt.subplot(2, 2, 3)
+        plt.plot(x3, y3, '.-')
+        plt.xlabel('Test accuracy vs. epoch')
+        plt.ylabel('Test Acc')
+
+
+        plt.subplot(2, 2, 4)
+        plt.plot(x4, y4, '.-')
+        plt.xlabel('Test loss vs. epoches')
+        plt.ylabel('Test loss')
+        plt.show()
+
+        plt.savefig("accuracy_loss.jpg")
+
+

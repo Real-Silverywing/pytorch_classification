@@ -40,8 +40,8 @@ def test():
             prediction = torch.max(out, 1)[1]
             correct = (prediction == labels).sum()
             total_correct += correct
-            print('Iteration: {}/{}'.format(iteration, max_iter), 'ACC: %.3f' %(correct.float()/batch_size))
-    print('All ACC: %.3f'%(total_correct.float()/(len(val_dataloader)* batch_size)))
+            print('VALIDATION: Iteration: {}/{}'.format(iteration, max_iter), 'ACC: %.3f' %(correct.float()/batch_size))
+    print('VALIDATION SET: ACC: %.3f'%(total_correct.float()/(len(val_dataloader)* batch_size)))
 
 
 def load_checkpoint(filepath):
@@ -180,7 +180,7 @@ for iteration in range(start_iter, max_iter):
         images, labels = images.cuda(), labels.cuda()
 
     out = model(images)
-    loss = criterion(out, labels)
+    loss = criterion(out, labels.long())
 
     optimizer.zero_grad()  # 清空梯度信息，否则在每次进行反向传播时都会累加
     loss.backward()  # loss反向传播
