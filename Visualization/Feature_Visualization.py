@@ -59,13 +59,14 @@ def load_checkpoint(filepath):
     for parameter in model.parameters():
         parameter.requires_grad = False
     model.eval()
-#     print(model)
-#     for name in model.state_dict():
-#         print(name)
+    # print(model)
+    # for name in model.state_dict():
+    #     print(name)
     return model
 
 
-savepath = './'
+
+
 def predict(model):
     # 读入模型
     model = load_checkpoint(model)
@@ -82,16 +83,17 @@ def predict(model):
         img = img.cuda()
     with torch.no_grad():
         x = model.conv1(img)
-        draw_features(8, 8, 64,  x.cpu().numpy(), "{}/f1_conv1.png".format(savepath))
+        draw_features(8, 8, 64,  x.cpu().numpy(), "{}/featuremap.png".format(savepath))
 
 
 
 
 
 if __name__ == "__main__":
-
-    trained_model =  '/disk/haihua/weights/resnet50/epoch_39.pth'
-    img_path = './test.png'
+    typename = 'swell'
+    trained_model =  'F:\Programming\pytorch_classification-master\data\weights\\resnet101\epoch_60.pth'
+    img_path = './'+typename+'/example.jpg'
+    savepath = './'+typename+'/'
 
     predict(trained_model)
 
