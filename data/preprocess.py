@@ -11,11 +11,11 @@ import random
 
 
 if __name__ == '__main__':
-    traindata_path = cfg.BASE + 'train'
+    traindata_path = cfg.BASE + r'\train'
     labels = os.listdir(traindata_path)
-    valdata_path = cfg.BASE + 'test'
+    valdata_path = cfg.BASE + r'\test'
     ##写train.txt文件
-    txtpath = cfg.BASE
+    txtpath = cfg.BASE+r'/'
     print(labels)
 
     if os.path.exists(txtpath + 'train.txt'): os.remove(txtpath + 'train.txt')

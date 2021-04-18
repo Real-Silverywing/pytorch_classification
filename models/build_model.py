@@ -32,6 +32,7 @@ def Resnet101(num_classes, test=False):
         if LOCAL_PRETRAINED['resnet101'] == None:
             state_dict = load_state_dict_from_url(model_urls['resnet101'], progress=True)
         else:
+            #state_dict = load_state_dict_from_url(model_urls['resnet101'], progress=True)
             state_dict = state_dict = torch.load(LOCAL_PRETRAINED['resnet101'])
         model.load_state_dict(state_dict)
     fc_features = model.fc.in_features

@@ -45,20 +45,20 @@ MODEL_NAMES = {
 }
 
 
-BASE = 'F:\Programming\pytorch_classification-master\data\\'
+BASE = r'F:\Programming\pytorch_classification\data'
 
 
 # 训练好模型的保存位置
-SAVE_FOLDER = BASE + 'weights/'
+SAVE_FOLDER = BASE + r'\weights'
 
 #数据集的存放位置
-TRAIN_LABEL_DIR =BASE + 'train.txt'     
-VAL_LABEL_DIR = BASE + 'val.txt'
-TEST_LABEL_DIR = BASE + 'test.txt'
+TRAIN_LABEL_DIR =BASE + r'\train.txt'
+VAL_LABEL_DIR = BASE + r'\val.txt'
+TEST_LABEL_DIR = BASE + r'\test.txt'
 
 
-##训练完成，权重文件的保存路径,默认保存在trained_model下
-TRAINED_MODEL = BASE + 'weights//resnet101/epoch_60.pth'
+##训练完成，要使用predict.py验证时，权重文件的保存路径,默认保存在trained_model下
+TRAINED_MODEL = BASE + r'\weights\resnet101\epoch_60.pth'
 
 
 
