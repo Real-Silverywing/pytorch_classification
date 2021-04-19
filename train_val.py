@@ -183,7 +183,7 @@ for iteration in range(start_iter, max_iter):
 
         ###保存模型
         model.train()
-        if epoch % 1 == 0 and epoch > 0:
+        if epoch % cfg.CHECKPOINT_EPOCH == 0 and epoch > 0:
             if cfg.GPUS > 1:
                 checkpoint = {'model': model.module,
                             'model_state_dict': model.module.state_dict(),

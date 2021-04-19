@@ -43,9 +43,13 @@ MODEL_NAMES = {
     'efficientnet-b7': Efficientnet,
     'efficientnet-b8': Efficientnet
 }
+#每几个epoch存储一下pth
+CHECKPOINT_EPOCH=5
 
 
-BASE = r'F:\Programming\pytorch_classification\data'
+STORAGE= r'F:\Programming\My_laryngeal_classification'
+BASE = STORAGE+'\data'
+
 
 
 # 训练好模型的保存位置
