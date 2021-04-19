@@ -9,7 +9,7 @@ home = os.path.expanduser('~')
 NUM_CLASSES = 2
 
 #训练时batch的大小
-BATCH_SIZE = 10
+BATCH_SIZE = 5
 
 #网络默认输入图像的大小---过大裁剪的！！！
 INPUT_SIZE = 224
@@ -49,7 +49,8 @@ BASE = r'F:\Programming\pytorch_classification\data'
 
 
 # 训练好模型的保存位置
-SAVE_FOLDER = BASE + r'\weights'
+SAVE_FOLDER = BASE + r'\weights\\'
+#保存的文件夹最后要有斜线
 
 #数据集的存放位置
 TRAIN_LABEL_DIR =BASE + r'\train.txt'

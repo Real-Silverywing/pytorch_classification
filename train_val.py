@@ -64,21 +64,18 @@ def val_in_train():
         y1 = Accuracy_list
         y2 = Loss_list
 
+        plt.figure(figsize=(16, 9), dpi=100)
         plt.subplot(1, 2, 1)
         plt.plot(x1, y1, 'o-')
         plt.xlabel('Test accuracy vs. iteration')
         plt.ylabel('Test accuracy')
-
         plt.subplot(1, 2, 2)
         plt.plot(x2, y2, '.-')
         plt.xlabel('Test loss vs. iteration')
         plt.ylabel('Test loss')
 
-        #plt.subplots_adjust(left=0.09, right=1, wspace=0.25, hspace=0.25, bottom=0.13, top=0.91)
-        plt.figure(figsize=(19, 9), dpi=100)
-        plt.savefig('accuracy_loss.jpg')
-        # plt.savefig(os.path.join(save_folder , 'accuracy_loss_{}-{}epoch-{}.jpg'
-        #               .format(cfg.PREDICT_MODEL_NAME,cfg.PREDICT_EPOCH,cfg.INPUT_SIZE)))
+        plt.savefig(os.path.join(save_folder, 'accuracy_loss_{}-{}epoch-{}.jpg'
+                                 .format(cfg.PREDICT_MODEL_NAME, cfg.PREDICT_EPOCH, cfg.INPUT_SIZE)))
 
 
 def load_checkpoint(filepath):
@@ -186,7 +183,7 @@ for iteration in range(start_iter, max_iter):
 
         ###保存模型
         model.train()
-        if epoch % 5 == 0 and epoch > 0:
+        if epoch % 1 == 0 and epoch > 0:
             if cfg.GPUS > 1:
                 checkpoint = {'model': model.module,
                             'model_state_dict': model.module.state_dict(),
