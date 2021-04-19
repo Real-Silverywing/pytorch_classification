@@ -17,7 +17,7 @@ from utils import adjust_learning_rate_cosine, adjust_learning_rate_step
 import matplotlib.pyplot as plt
 
 ##创建训练模型参数保存的文件夹
-save_folder = cfg.SAVE_FOLDER + cfg.model_name
+save_folder = cfg.SAVE_FOLDER + cfg.model_name +'\'
 os.makedirs(save_folder, exist_ok=True)
 Loss_list = []
 Accuracy_list = []

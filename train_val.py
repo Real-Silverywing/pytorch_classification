@@ -22,7 +22,7 @@ from utils import adjust_learning_rate_cosine, adjust_learning_rate_step
 
 
 ##创建训练模型参数保存的文件夹
-save_folder = cfg.SAVE_FOLDER + cfg.model_name
+save_folder = cfg.SAVE_FOLDER + cfg.model_name +'\'
 os.makedirs(save_folder, exist_ok=True)
 
 Loss_list = []
@@ -54,13 +54,31 @@ def val_in_train():
             total_val_loss  += val_loss.item()
             print('VALIDATION: Iteration: {}/{}'.format(iteration, max_iter),
                   'ACC: %.3f' %(correct.float()/batch_size),'Loss: %.6f' % (val_loss.item()))
-
-    Loss_list.append(val_loss.item())
     Accuracy_list.append((total_correct.float()/(len(val_dataloader)* batch_size)))
-    Loss_temp.append(val_loss.item())
-    Acc_temp.append((total_correct.float()/(len(val_dataloader)* batch_size)))
+    Loss_list.append((total_val_loss/(len(val_dataloader)* batch_size)))
     print('VALIDATION SET: ACC: %.3f'%(total_correct.float()/(len(val_dataloader)* batch_size)),
           'loss: %.3f' %(total_val_loss/(len(val_dataloader)* batch_size)))
+    if epoch == cfg.MAX_EPOCH:
+        x1 = range(len(Accuracy_list))
+        x2 = range(len(Loss_list))
+        y1 = Accuracy_list
+        y2 = Loss_list
+
+        plt.subplot(1, 2, 1)
+        plt.plot(x1, y1, 'o-')
+        plt.xlabel('Test accuracy vs. iteration')
+        plt.ylabel('Test accuracy')
+
+        plt.subplot(1, 2, 2)
+        plt.plot(x2, y2, '.-')
+        plt.xlabel('Test loss vs. iteration')
+        plt.ylabel('Test loss')
+
+        #plt.subplots_adjust(left=0.09, right=1, wspace=0.25, hspace=0.25, bottom=0.13, top=0.91)
+        plt.figure(figsize=(19, 9), dpi=100)
+        plt.savefig('accuracy_loss.jpg')
+        # plt.savefig(os.path.join(save_folder , 'accuracy_loss_{}-{}epoch-{}.jpg'
+        #               .format(cfg.PREDICT_MODEL_NAME,cfg.PREDICT_EPOCH,cfg.INPUT_SIZE)))
 
 
 def load_checkpoint(filepath):
@@ -163,11 +181,12 @@ for iteration in range(start_iter, max_iter):
         loss = 0
         epoch += 1
         if epoch > 1:
-            pass
-        val_in_train()
+            val_in_train()
+
+
         ###保存模型
         model.train()
-        if epoch % 3 == 0 and epoch > 0:
+        if epoch % 5 == 0 and epoch > 0:
             if cfg.GPUS > 1:
                 checkpoint = {'model': model.module,
                             'model_state_dict': model.module.state_dict(),
@@ -219,29 +238,6 @@ for iteration in range(start_iter, max_iter):
         print('Epoch:' + repr(epoch) + ' || epochiter: ' + repr(iteration % epoch_size) + '/' + repr(epoch_size)
               + '|| Totel iter ' + repr(iteration) + ' || Loss: %.6f||' % (loss.item()) + 'ACC: %.3f ||' %(train_acc * 100) + 'LR: %.8f' % (lr))
 
-
-    if iteration==max_iter_end-1:
-        x1 = range(len(Accuracy_list))
-        x2 = range(len(Loss_list))
-        x3 = range(len(Acc_Epoch))
-        x4 = range(len(Loss_Epoch))
-        y1 = Accuracy_list
-        y2 = Loss_list
-        y3 = Acc_Epoch
-        y4 = Loss_Epoch
-
-        plt.subplot(1, 2, 1)
-        plt.plot(x1, y1, 'o-')
-        plt.xlabel('Test accuracy vs. iteration')
-        plt.ylabel('Test accuracy')
-
-        plt.subplot(1, 2, 2)
-        plt.plot(x2, y2, '.-')
-        plt.xlabel('Test loss vs. iteration')
-        plt.ylabel('Test loss')
-
-
-        plt.savefig("accuracy_loss.jpg")
 
 
 
