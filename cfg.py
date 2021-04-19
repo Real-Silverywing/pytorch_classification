@@ -9,12 +9,12 @@ home = os.path.expanduser('~')
 NUM_CLASSES = 2
 
 #训练时batch的大小
-BATCH_SIZE = 5
+BATCH_SIZE = 10
 
 #网络默认输入图像的大小---过大裁剪的！！！
 INPUT_SIZE = 224
 #训练最多的epoch
-MAX_EPOCH = 30
+MAX_EPOCH = 2
 # 使用gpu的数目
 GPUS = 0
 # 从第几个epoch开始resume训练，如果为0，从头开始

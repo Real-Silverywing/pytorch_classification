@@ -9,9 +9,12 @@
 import torch
 import argparse
 import os
+import math
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import matplotlib.pyplot as plt
+
 
 from data import train_dataloader,train_datasets, val_datasets, val_dataloader
 import cfg
@@ -22,26 +25,42 @@ from utils import adjust_learning_rate_cosine, adjust_learning_rate_step
 save_folder = cfg.SAVE_FOLDER + cfg.model_name
 os.makedirs(save_folder, exist_ok=True)
 
+Loss_list = []
+Accuracy_list = []
+Loss_Epoch = []
+Acc_Epoch = []
+Loss_temp=[]
+Acc_temp=[]
 
 
-def test():
+def val_in_train():
     model.eval()
     total_correct = 0
+    total_val_loss = 0
     val_iter = iter(val_dataloader)
     max_iter = len(val_dataloader)
     for iteration in range(max_iter):
-        try:
-            images, labels = next(val_iter)
-        except:
-            continue
+        # try:
+        images, labels = next(val_iter)
+        # except:
+        #     continue
         if torch.cuda.is_available():
             images, labels = images.cuda(), labels.cuda()
             out = model(images)
             prediction = torch.max(out, 1)[1]
             correct = (prediction == labels).sum()
             total_correct += correct
-            print('VALIDATION: Iteration: {}/{}'.format(iteration, max_iter), 'ACC: %.3f' %(correct.float()/batch_size))
-    print('VALIDATION SET: ACC: %.3f'%(total_correct.float()/(len(val_dataloader)* batch_size)))
+            val_loss = criterion(out, labels.long())
+            total_val_loss  += val_loss.item()
+            print('VALIDATION: Iteration: {}/{}'.format(iteration, max_iter),
+                  'ACC: %.3f' %(correct.float()/batch_size),'Loss: %.6f' % (val_loss.item()))
+
+    Loss_list.append(val_loss.item())
+    Accuracy_list.append((total_correct.float()/(len(val_dataloader)* batch_size)))
+    Loss_temp.append(val_loss.item())
+    Acc_temp.append((total_correct.float()/(len(val_dataloader)* batch_size)))
+    print('VALIDATION SET: ACC: %.3f'%(total_correct.float()/(len(val_dataloader)* batch_size)),
+          'loss: %.3f' %(total_val_loss/(len(val_dataloader)* batch_size)))
 
 
 def load_checkpoint(filepath):
@@ -117,6 +136,10 @@ max_iter = cfg.MAX_EPOCH * epoch_size
 
 start_iter = cfg.RESUME_EPOCH * epoch_size
 
+
+max_iter_end=math.floor(max_iter/10)*10
+
+
 epoch = cfg.RESUME_EPOCH
 
 # cosine学习率调整
@@ -141,7 +164,7 @@ for iteration in range(start_iter, max_iter):
         epoch += 1
         if epoch > 1:
             pass
-        test()
+        val_in_train()
         ###保存模型
         model.train()
         if epoch % 3 == 0 and epoch > 0:
@@ -170,10 +193,10 @@ for iteration in range(start_iter, max_iter):
 
 
     ## 获取image 和 label
-    try:
-        images, labels = next(batch_iterator)
-    except:
-        continue
+    # try:
+    images, labels = next(batch_iterator)
+    # except:
+    #     continue
 
     ##在pytorch0.4之后将Variable 与tensor进行合并，所以这里不需要进行Variable封装
     if torch.cuda.is_available():
@@ -197,7 +220,28 @@ for iteration in range(start_iter, max_iter):
               + '|| Totel iter ' + repr(iteration) + ' || Loss: %.6f||' % (loss.item()) + 'ACC: %.3f ||' %(train_acc * 100) + 'LR: %.8f' % (lr))
 
 
+    if iteration==max_iter_end-1:
+        x1 = range(len(Accuracy_list))
+        x2 = range(len(Loss_list))
+        x3 = range(len(Acc_Epoch))
+        x4 = range(len(Loss_Epoch))
+        y1 = Accuracy_list
+        y2 = Loss_list
+        y3 = Acc_Epoch
+        y4 = Loss_Epoch
 
+        plt.subplot(1, 2, 1)
+        plt.plot(x1, y1, 'o-')
+        plt.xlabel('Test accuracy vs. iteration')
+        plt.ylabel('Test accuracy')
+
+        plt.subplot(1, 2, 2)
+        plt.plot(x2, y2, '.-')
+        plt.xlabel('Test loss vs. iteration')
+        plt.ylabel('Test loss')
+
+
+        plt.savefig("accuracy_loss.jpg")
 
 
 
