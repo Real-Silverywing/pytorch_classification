@@ -14,7 +14,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
-
+import shutil
 
 from data import train_dataloader,train_datasets, val_datasets, val_dataloader
 import cfg
@@ -27,10 +27,11 @@ os.makedirs(save_folder, exist_ok=True)
 
 Loss_list = []
 Accuracy_list = []
-Loss_Epoch = []
-Acc_Epoch = []
-Loss_temp=[]
-Acc_temp=[]
+
+cfg_path = os.path.join(os.getcwd(),'cfg.py')
+cfg_copy_path = os.path.join(save_folder, 'param.py')
+shutil.copyfile(cfg_path, cfg_copy_path)
+
 
 
 def val_in_train():
