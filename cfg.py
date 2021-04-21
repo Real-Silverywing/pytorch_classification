@@ -6,7 +6,7 @@
 import os
 home = os.path.expanduser('~')
 ##数据集的类别
-NUM_CLASSES = 2
+NUM_CLASSES = 3
 
 #训练时batch的大小
 BATCH_SIZE = 5
@@ -14,7 +14,7 @@ BATCH_SIZE = 5
 #网络默认输入图像的大小---过大裁剪的！！！
 INPUT_SIZE = 224
 #训练最多的epoch
-MAX_EPOCH = 2
+MAX_EPOCH = 50
 # 使用gpu的数目
 GPUS = 0
 # 从第几个epoch开始resume训练，如果为0，从头开始
@@ -44,7 +44,7 @@ MODEL_NAMES = {
     'efficientnet-b8': Efficientnet
 }
 #每几个epoch存储一下pth
-CHECKPOINT_EPOCH=5
+CHECKPOINT_EPOCH=1
 
 
 STORAGE= r'F:\Programming\My_laryngeal_classification'
@@ -64,9 +64,13 @@ TEST_LABEL_DIR = BASE + r'\test.txt'
 
 ##训练完成，要使用predict.py验证时，权重文件的保存路径,默认保存在trained_model下
 PREDICT_MODEL_NAME = 'resnet101'
-PREDICT_EPOCH = '60'
+PREDICT_EPOCH = '15'
 TRAINED_MODEL = BASE + '\weights\{}\epoch_{}.pth'.format(PREDICT_MODEL_NAME,PREDICT_EPOCH)
 
+#种类和label对应关系
+Norm_label = 0
+Polyp_label = 1
+Swell_label = 2
 
 
 
