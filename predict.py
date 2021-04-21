@@ -31,11 +31,20 @@ def predict(model):
     ##将模型放置在gpu上运行
     if torch.cuda.is_available():
         model.cuda()
-    pred_list, _id = [], []
+    pred_list, _id ,true_id = [], [], []
     for i in tqdm(range(len(imgs))):
         img_path = imgs[i].strip()
         # print(img_path)
         _id.append(os.path.basename(img_path).split('.')[0])
+        if _id[i].startswith('n'):
+            #true_id[i]=cfg.Norm_label
+            true_id.append(cfg.Norm_label)
+        elif _id[i].startswith('p'):
+            #true_id[i] = cfg.Polyp_label
+            true_id.append(cfg.Polyp_label)
+        elif _id[i].startswith('s'):
+            #true_id[i] = cfg.Swell_label
+            true_id.append(cfg.Swell_label)
         img = Image.open(img_path).convert('RGB')
         # print(type(img))
         img = get_test_transform(size=cfg.INPUT_SIZE)(img).unsqueeze(0)
@@ -46,7 +55,7 @@ def predict(model):
             out = model(img)
         prediction = torch.argmax(out, dim=1).cpu().item()
         pred_list.append(prediction)
-    return _id, pred_list
+    return _id, pred_list,true_id
 
 
 def tta_predict(model):
@@ -78,6 +87,7 @@ def tta_predict(model):
     return _id, pred_list
 
 
+
 if __name__ == "__main__":
 
     trained_model = cfg.TRAINED_MODEL
@@ -86,8 +96,8 @@ if __name__ == "__main__":
         imgs = f.readlines()
 
     # _id, pred_list = tta_predict(trained_model)
-    _id, pred_list = predict(trained_model)
+    _id, pred_list,true_label = predict(trained_model)
 
-    submission = pd.DataFrame({"ID": _id, "Label": pred_list})
+    submission = pd.DataFrame({"ID": _id, "Label": pred_list,"True Label":true_label})
     submission.to_csv(os.path.join(cfg.SAVE_FOLDER , cfg.PREDICT_MODEL_NAME , '测试结果_{}-{}epoch-{}.csv'
                       .format(cfg.PREDICT_MODEL_NAME,cfg.PREDICT_EPOCH,cfg.INPUT_SIZE)), index=True, header=True)
