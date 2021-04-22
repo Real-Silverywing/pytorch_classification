@@ -9,12 +9,12 @@ home = os.path.expanduser('~')
 NUM_CLASSES = 3
 
 #训练时batch的大小
-BATCH_SIZE = 5
+BATCH_SIZE = 10
 
 #网络默认输入图像的大小---过大裁剪的！！！
 INPUT_SIZE = 224
 #训练最多的epoch
-MAX_EPOCH = 50
+MAX_EPOCH = 31
 # 使用gpu的数目
 GPUS = 0
 # 从第几个epoch开始resume训练，如果为0，从头开始
@@ -27,16 +27,16 @@ LR = 1e-3
 
 
 # 采用的模型名称
-model_name = 'resnet101'
+model_name = 'resnext101_32x8d'
 
 from models import Resnet50, Resnet101, Resnext101_32x8d,Resnext101_32x16d, Densenet121, Densenet169, Mobilenetv2, Efficientnet, Resnext101_32x32d, Resnext101_32x48d
 MODEL_NAMES = {
-    'resnext101_32x8d': Resnext101_32x8d,
+    'resnext101_32x8d': Resnext101_32x8d,#可以用
     'resnext101_32x16d': Resnext101_32x16d,
     'resnext101_32x48d': Resnext101_32x48d,
     'resnext101_32x32d': Resnext101_32x32d,
-    'resnet50': Resnet50,
-    'resnet101': Resnet101,
+    'resnet50': Resnet50,#可以用
+    'resnet101': Resnet101,#可以用
     'densenet121': Densenet121,
     'densenet169': Densenet169,
     'moblienetv2': Mobilenetv2,
@@ -61,11 +61,6 @@ TRAIN_LABEL_DIR =BASE + r'\train.txt'
 VAL_LABEL_DIR = BASE + r'\val.txt'
 TEST_LABEL_DIR = BASE + r'\test.txt'
 
-
-##训练完成，要使用predict.py验证时，权重文件的保存路径,默认保存在trained_model下
-PREDICT_MODEL_NAME = 'resnet101'
-PREDICT_EPOCH = '15'
-TRAINED_MODEL = BASE + '\weights\{}\epoch_{}.pth'.format(PREDICT_MODEL_NAME,PREDICT_EPOCH)
 
 #种类和label对应关系
 Norm_label = 0

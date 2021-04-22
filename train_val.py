@@ -15,11 +15,12 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import shutil
+import  numpy as np
 
 from data import train_dataloader,train_datasets, val_datasets, val_dataloader
 import cfg
 from utils import adjust_learning_rate_cosine, adjust_learning_rate_step
-
+from sklearn.metrics import cohen_kappa_score
 
 ##创建训练模型参数保存的文件夹
 save_folder = cfg.SAVE_FOLDER + cfg.model_name
@@ -27,17 +28,49 @@ os.makedirs(save_folder, exist_ok=True)
 
 Loss_list = []
 Accuracy_list = []
+Kappa_list=[]
 
 cfg_path = os.path.join(os.getcwd(),'cfg.py')
 cfg_copy_path = os.path.join(save_folder, 'param.py')
 shutil.copyfile(cfg_path, cfg_copy_path)
 
+def plot_accloss(acclist,losslist):
+    x1 = range(1, len(acclist) + 1)
+    x2 = range(1, len(losslist) + 1)
+    y1 = acclist
+    y2 = losslist
 
+    plt.figure(figsize=(16, 9), dpi=100)
+    plt.subplot(1, 2, 1)
+    plt.plot(x1, y1, 'o-')
+    plt.xlabel('Test accuracy vs. iteration')
+    plt.ylabel('Test accuracy')
+    plt.subplot(1, 2, 2)
+    plt.plot(x2, y2, '.-')
+    plt.xlabel('Test loss vs. iteration')
+    plt.ylabel('Test loss')
+
+    plt.savefig(os.path.join(save_folder, 'accuracy_loss_{}-{}epoch-{}.jpg'
+                             .format(cfg.model_name, cfg.MAX_EPOCH-1, cfg.INPUT_SIZE)))
+    plt.close()
+def plot_result(list,xlabel,ylabel):
+    x1 = range(1, len(list) + 1)
+    y1 = list
+    plt.figure(figsize=(16, 9), dpi=100)
+    plt.plot(x1, y1, 'o-')
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.savefig(os.path.join(save_folder, xlabel+ylabel+'_{}-{}epoch-{}.jpg'
+                             .format(cfg.model_name, cfg.MAX_EPOCH-1, cfg.INPUT_SIZE)))
+    plt.close()
 
 def val_in_train():
     model.eval()
     total_correct = 0
     total_val_loss = 0
+    total_kappa = 0
+    nan_exist=0
+    kappa_count=0
     val_iter = iter(val_dataloader)
     max_iter = len(val_dataloader)
     for iteration in range(max_iter):
@@ -45,38 +78,41 @@ def val_in_train():
         images, labels = next(val_iter)
         # except:
         #     continue
+        predict_list=[]
+        label_list=[]
         if torch.cuda.is_available():
             images, labels = images.cuda(), labels.cuda()
             out = model(images)
             prediction = torch.max(out, 1)[1]
+
             correct = (prediction == labels).sum()
             total_correct += correct
             val_loss = criterion(out, labels.long())
             total_val_loss  += val_loss.item()
+            predict_list=prediction.cpu().numpy().tolist()
+            #predict_list.append(prediction.tolist())
+            label_list=labels.cpu().numpy().tolist()
+            #label_list.append(labels[0].tolist())
+            kappa_in_batch = cohen_kappa_score(label_list, predict_list)
+            if not kappa_in_batch == kappa_in_batch:#nan类型的特性是自身不等于自身
+                print('发现一个nan')
+                nan_exist += 1
+            else:
+                total_kappa += kappa_in_batch
+                kappa_count +=1
+
             print('VALIDATION: Iteration: {}/{}'.format(iteration, max_iter),
-                  'ACC: %.3f' %(correct.float()/batch_size),'Loss: %.6f' % (val_loss.item()))
+                  'ACC: %.6f' %(correct.float()/batch_size),'Loss: %.6f' % (val_loss.item()),'Kappa:%.5f'%kappa_in_batch)
     Accuracy_list.append((total_correct.float()/(len(val_dataloader)* batch_size)))
     Loss_list.append((total_val_loss/(len(val_dataloader)* batch_size)))
-    print('VALIDATION SET: ACC: %.3f'%(total_correct.float()/(len(val_dataloader)* batch_size)),
-          'loss: %.3f' %(total_val_loss/(len(val_dataloader)* batch_size)))
+    Kappa_list.append((total_kappa/(kappa_count-nan_exist)))
+    print('VALIDATION SET: ACC: %.6f'%(total_correct.float()/(len(val_dataloader)* batch_size)),
+          'loss: %.3f' %(total_val_loss/(len(val_dataloader)* batch_size)),
+          'Kappa:%.4f'%(total_kappa/(kappa_count-nan_exist)))
     if epoch == cfg.MAX_EPOCH:
-        x1 = range(len(Accuracy_list))
-        x2 = range(len(Loss_list))
-        y1 = Accuracy_list
-        y2 = Loss_list
+        plot_accloss(Accuracy_list,Loss_list)
+        plot_result(Kappa_list,'epoch','Kappa')
 
-        plt.figure(figsize=(16, 9), dpi=100)
-        plt.subplot(1, 2, 1)
-        plt.plot(x1, y1, 'o-')
-        plt.xlabel('Test accuracy vs. iteration')
-        plt.ylabel('Test accuracy')
-        plt.subplot(1, 2, 2)
-        plt.plot(x2, y2, '.-')
-        plt.xlabel('Test loss vs. iteration')
-        plt.ylabel('Test loss')
-
-        plt.savefig(os.path.join(save_folder, 'accuracy_loss_{}-{}epoch-{}.jpg'
-                                 .format(cfg.PREDICT_MODEL_NAME, cfg.PREDICT_EPOCH, cfg.INPUT_SIZE)))
 
 
 def load_checkpoint(filepath):
@@ -96,7 +132,7 @@ if not cfg.RESUME_EPOCH:
         for child in model.children():
             ct += 1
             # print(child)
-            if ct < 7:
+            if ct < 7:#以前是7,在resnet上好用,densenet冻结1或者2
                 print(child)
                 for param in child.parameters():
                     param.requires_grad = False
@@ -234,7 +270,7 @@ for iteration in range(start_iter, max_iter):
 
     if iteration % 10 == 0:
         print('Epoch:' + repr(epoch) + ' || epochiter: ' + repr(iteration % epoch_size) + '/' + repr(epoch_size)
-              + '|| Totel iter ' + repr(iteration) + ' || Loss: %.6f||' % (loss.item()) + 'ACC: %.3f ||' %(train_acc * 100) + 'LR: %.8f' % (lr))
+              + '|| Totel iter ' + repr(iteration) + ' || Loss: %.4f||' % (loss.item()) + 'in batch ACC: %.4f ||' %train_acc + 'LR: %.8f' % (lr))
 
 
 
