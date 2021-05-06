@@ -27,7 +27,7 @@ LR = 1e-3
 
 
 # 采用的模型名称
-model_name = 'resnext101_32x8d'
+model_name = 'resnet101'
 
 from models import Resnet50, Resnet101, Resnext101_32x8d,Resnext101_32x16d, Densenet121, Densenet169, Mobilenetv2, Efficientnet, Resnext101_32x32d, Resnext101_32x48d
 MODEL_NAMES = {
@@ -48,7 +48,8 @@ CHECKPOINT_EPOCH=1
 
 
 STORAGE= r'F:\Programming\My_laryngeal_classification'
-BASE = STORAGE+'\data'
+#BASE = STORAGE+r'\data\kfold\5'
+BASE = STORAGE+r'\data'
 
 
 
@@ -62,7 +63,7 @@ VAL_LABEL_DIR = BASE + r'\val.txt'
 TEST_LABEL_DIR = BASE + r'\test.txt'
 
 
-#种类和label对应关系
+#种类和label对应关系--主要在predict.py体现
 Norm_label = 0
 Polyp_label = 1
 Swell_label = 2

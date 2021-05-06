@@ -86,7 +86,7 @@ def tta_predict(model):
         pred_list.append(res)
     return _id, pred_list
 
-
+#绘制混淆矩阵
 def plot_confusion_matrix(cm, savename, title='Confusion Matrix'):
     plt.figure(figsize=(12, 8), dpi=100)
     np.set_printoptions(precision=2)
@@ -126,10 +126,10 @@ def plot_confusion_matrix(cm, savename, title='Confusion Matrix'):
 if __name__ == "__main__":
     classes = ['normal', 'polyp', 'cysts']
     kappa_list=[]
-    PREDICT_MODEL_NAME = 'resnet50'
+    PREDICT_MODEL_NAME = 'resnet101'
 
     #循环跑每个epoch结果range(最大）
-    for zongshu in range(50):
+    for zongshu in range(30):
         #顺序0 1 2
 
         PREDICT_EPOCH= zongshu+1
@@ -149,12 +149,15 @@ if __name__ == "__main__":
         cm = confusion_matrix(true_label,pred_list)
         kappa= cohen_kappa_score(true_label,pred_list)
         kappa_list.append(kappa)
-        plot_confusion_matrix(cm, os.path.join(cfg.SAVE_FOLDER , PREDICT_MODEL_NAME , 'Confusion Matrix_{}-{}epoch-{}.png'
-                          .format(PREDICT_MODEL_NAME,PREDICT_EPOCH,cfg.INPUT_SIZE)), title='Confusion Matrix \n Kappa={}'.format(kappa))
+        savedata3 = pd.DataFrame({"Test_kappa": kappa_list})
+        savedata3.to_csv(os.path.join(cfg.SAVE_FOLDER, 'test-kappa_{}.csv'
+                                      .format(PREDICT_MODEL_NAME)), index=True, header=True)
+        # plot_confusion_matrix(cm, os.path.join(cfg.SAVE_FOLDER , PREDICT_MODEL_NAME , 'Confusion Matrix_{}-{}epoch-{}.png'
+        #                   .format(PREDICT_MODEL_NAME,PREDICT_EPOCH,cfg.INPUT_SIZE)), title='Confusion Matrix \n Kappa={}'.format(kappa))
 
-        # submission = pd.DataFrame({"ID": _id, "Label": pred_list,"True Label":true_label})
-        # submission.to_csv(os.path.join(cfg.SAVE_FOLDER , PREDICT_MODEL_NAME , '测试结果_{}-{}epoch-{}.csv'
-        #                   .format(PREDICT_MODEL_NAME,PREDICT_EPOCH,cfg.INPUT_SIZE)), index=True, header=True)
+        submission = pd.DataFrame({"ID": _id, "Label": pred_list,"True Label":true_label})
+        submission.to_csv(os.path.join(cfg.SAVE_FOLDER , PREDICT_MODEL_NAME , 'predict结果_{}-{}epoch-{}.csv'
+                          .format(PREDICT_MODEL_NAME,PREDICT_EPOCH,cfg.INPUT_SIZE)), index=True, header=True)
 
     #range+1才对，不然少一个
     xaxis = range(1,len(kappa_list)+1)

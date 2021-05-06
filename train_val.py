@@ -15,8 +15,7 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import shutil
-import  numpy as np
-
+import pandas as pd
 from data import train_dataloader,train_datasets, val_datasets, val_dataloader
 import cfg
 from utils import adjust_learning_rate_cosine, adjust_learning_rate_step
@@ -26,14 +25,21 @@ from sklearn.metrics import cohen_kappa_score
 save_folder = cfg.SAVE_FOLDER + cfg.model_name
 os.makedirs(save_folder, exist_ok=True)
 
+#保存训练过程中的数据
 Loss_list = []
 Accuracy_list = []
 Kappa_list=[]
+train_acc_list=[]
+train_loss_list=[]
+train_iter=[]
+train_epoch=[]
 
+#将训练参数的cfg.py拷贝到结果里
 cfg_path = os.path.join(os.getcwd(),'cfg.py')
 cfg_copy_path = os.path.join(save_folder, 'param.py')
 shutil.copyfile(cfg_path, cfg_copy_path)
 
+#绘制准确度acc和loss
 def plot_accloss(acclist,losslist):
     x1 = range(1, len(acclist) + 1)
     x2 = range(1, len(losslist) + 1)
@@ -53,22 +59,28 @@ def plot_accloss(acclist,losslist):
     plt.savefig(os.path.join(save_folder, 'accuracy_loss_{}-{}epoch-{}.jpg'
                              .format(cfg.model_name, cfg.MAX_EPOCH-1, cfg.INPUT_SIZE)))
     plt.close()
-def plot_result(list,xlabel,ylabel):
+
+#绘制结果
+#列表,横轴名,纵轴名,标题
+def plot_result(list,xlabel,ylabel,title):
     x1 = range(1, len(list) + 1)
     y1 = list
     plt.figure(figsize=(16, 9), dpi=100)
     plt.plot(x1, y1, 'o-')
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.savefig(os.path.join(save_folder, xlabel+ylabel+'_{}-{}epoch-{}.jpg'
+    plt.title(title)
+    plt.savefig(os.path.join(save_folder, xlabel+' vs '+ylabel+'_{}-{}epoch-{}.jpg'
                              .format(cfg.model_name, cfg.MAX_EPOCH-1, cfg.INPUT_SIZE)))
     plt.close()
 
+#
 def val_in_train():
     model.eval()
     total_correct = 0
     total_val_loss = 0
     total_kappa = 0
+    #算kappa有问题,会出现nan现象,会影响平均值计算
     nan_exist=0
     kappa_count=0
     val_iter = iter(val_dataloader)
@@ -78,8 +90,6 @@ def val_in_train():
         images, labels = next(val_iter)
         # except:
         #     continue
-        predict_list=[]
-        label_list=[]
         if torch.cuda.is_available():
             images, labels = images.cuda(), labels.cuda()
             out = model(images)
@@ -88,12 +98,13 @@ def val_in_train():
             correct = (prediction == labels).sum()
             total_correct += correct
             val_loss = criterion(out, labels.long())
-            total_val_loss  += val_loss.item()
+            total_val_loss+= val_loss.item()
             predict_list=prediction.cpu().numpy().tolist()
             #predict_list.append(prediction.tolist())
             label_list=labels.cpu().numpy().tolist()
             #label_list.append(labels[0].tolist())
             kappa_in_batch = cohen_kappa_score(label_list, predict_list)
+
             if not kappa_in_batch == kappa_in_batch:#nan类型的特性是自身不等于自身
                 print('发现一个nan')
                 nan_exist += 1
@@ -109,9 +120,19 @@ def val_in_train():
     print('VALIDATION SET: ACC: %.6f'%(total_correct.float()/(len(val_dataloader)* batch_size)),
           'loss: %.3f' %(total_val_loss/(len(val_dataloader)* batch_size)),
           'Kappa:%.4f'%(total_kappa/(kappa_count-nan_exist)))
+
+    #训练完以后绘制结果,存储结果到csv
     if epoch == cfg.MAX_EPOCH:
         plot_accloss(Accuracy_list,Loss_list)
-        plot_result(Kappa_list,'epoch','Kappa')
+        plot_result(Kappa_list,'epoch','Kappa','Validation Kappa')
+
+        savedata1 = pd.DataFrame({"Val_acc": Accuracy_list, "Val_loss": Loss_list,"Val_kappa": Kappa_list})
+        savedata1.to_csv(os.path.join(save_folder, 'val验证变量_{}-{}epoch.csv'
+                                      .format(cfg.model_name, cfg.MAX_EPOCH)), index=True, header=True)
+        savedata2 = pd.DataFrame(
+            {"epoch": train_epoch, "iter": train_iter, "acc": train_acc_list, "loss": train_loss_list})
+        savedata2.to_csv(os.path.join(save_folder, 'Train训练变量_{}-{}epoch.csv'
+                                      .format(cfg.model_name, cfg.MAX_EPOCH)), index=True, header=True)
 
 
 
@@ -168,7 +189,7 @@ if torch.cuda.is_available():
 
 
 ##定义优化器与损失函数
-optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=cfg.LR)
+#optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=cfg.LR)
 # optimizer = optim.Adam(model.parameters(), lr=cfg.LR)
 optimizer = optim.SGD(model.parameters(), lr=cfg.LR,
                       momentum=cfg.MOMENTUM, weight_decay=cfg.WEIGHT_DECAY)
@@ -268,16 +289,11 @@ for iteration in range(start_iter, max_iter):
     # print(train_correct.type())
     train_acc = (train_correct.float()) / batch_size
 
+    #训练过程中显示
     if iteration % 10 == 0:
+        train_acc_list.append(train_acc)
+        train_loss_list.append(loss.item())
+        train_iter.append(repr(iteration))
+        train_epoch.append(repr(epoch))
         print('Epoch:' + repr(epoch) + ' || epochiter: ' + repr(iteration % epoch_size) + '/' + repr(epoch_size)
               + '|| Totel iter ' + repr(iteration) + ' || Loss: %.4f||' % (loss.item()) + 'in batch ACC: %.4f ||' %train_acc + 'LR: %.8f' % (lr))
-
-
-
-
-
-
-
-
-
-
